@@ -4,8 +4,8 @@ author: "Michael Yan"
 date: "11/5/2019"
 output: github_document
 ---
-# General setup
 ```{r setup, include=FALSE}
+## general setup
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(viridis)
@@ -40,6 +40,7 @@ iris_with_missing = iris %>%
 ```
 
 ```{r}
+## create a funciton that fill in the missing values 
 fill_missing = function(x) {
   if (is.numeric(x)) {
      x = replace_na(x, round(mean(x, na.rm = TRUE),1))
@@ -95,4 +96,48 @@ combined_df %>%
 ```
 
 * Based on the spaghetti plots made, we can see that there is not really an increase or a decrease for the control group. The observations for individuals fluctuate a lot but basiclly stay the same across the period of the experiment. There is not a significant enough trend. On the other hand, for the experimental group, although individual data still fluatuates a lot, there is a obvious increasing trend as the experiment proceed. In general, we see a higher average reading for the individuals in the experimental group compared to the ones from the control group.
+
+# Problem 3
+```{r}
+## create a function that does simple linear regression(get the estimate and p-value)
+set.seed(10)
+sim_line_regression = function(n = 30, beta0 = 2, beta1 = 0) {
+  
+  sim_data = tibble(
+    x = rnorm(n, mean = 0, sd = 1),
+    y = beta0 + beta1 * x + rnorm(n, 0, sqrt(50))
+  )
+  
+  ls_fit = lm(y ~ x, data = sim_data) %>% 
+    broom::tidy()
+  tibble(
+    beta1_hat = ls_fit[[2,2]],
+    p_value = ls_fit[[2,5]]
+  )
+}
+```
+
+```{r}
+## generate 10000 datasets from the model created
+set.seed(10)
+
+generate_10000_list =
+  rerun(10000, sim_line_regression(beta1 = 0)) %>%
+  bind_rows()
+
+generate_10000_list
+```
+
+```{r}
+## try using beta1 = {1,2,3,4,5,6}
+set.seed(10)
+
+different_beta1_lists = 
+  tibble(beta1 = c(1, 2, 3, 4, 5, 6)) %>% 
+  mutate(
+    output_lists = map(beta1, ~rerun(10000, sim_line_regression(beta1 = .x)))) %>%
+  unnest(output_lists) %>% 
+  unnest()
+```
+
 
