@@ -1,0 +1,45 @@
+---
+title: "p8105_hw5_qy2234"
+author: "Michael Yan"
+date: "11/5/2019"
+output: github_document
+---
+
+# Problem 1
+```{r}
+## load in the given dataset and clean the names
+library(tidyverse)
+
+set.seed(10)
+
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species)) %>% 
+  janitor::clean_names()
+```
+
+```{r}
+
+
+iris_with_missing %>% 
+  mutate(sepal_length = replace_na(sepal_length, mean(pull(iris_with_missing, sepal_length), na.rm = TRUE)))
+
+iris_with_missing %>% 
+  mutate(species = replace_na(species, "virginica"))
+
+
+## fill in missing values
+fill_missing = function(x) {
+  if (is.numeric(x)) {
+    mutate(x = replace_na(x, mean(pull(iris_with_missing, x), na.rm = TRUE)))
+  } 
+  else if (is.character(x)) {
+    mutate(x = replace_na(x, "virginica"))
+  }
+}
+
+iris_with_missing %>% 
+  fill_missing(sepal_length)
+```
+
+
