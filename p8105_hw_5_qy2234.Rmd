@@ -78,3 +78,21 @@ combined_df =
 combined_df %>%
   knitr::kable()
 ```
+
+```{r}
+# make a spaghetti plot showing observations on each subject over time
+combined_df %>% 
+  pivot_longer(week_1:week_8,
+               names_to = "week",
+               values_to = "readings") %>% 
+  ggplot(aes(x = week, y = readings, color = id, group = id)) +
+  geom_line() +
+  geom_point(aes(shape = arm), alpha = .5) +
+  facet_grid(.~arm) +
+  labs(title = "Spaghetti plots based on arm",
+       x = "Week",
+       y = "Readings")
+```
+
+* Based on the spaghetti plots made, we can see that there is not really an increase or a decrease for the control group. The observations for individuals fluctuate a lot but basiclly stay the same across the period of the experiment. There is not a significant enough trend. On the other hand, for the experimental group, although individual data still fluatuates a lot, there is a obvious increasing trend as the experiment proceed. In general, we see a higher average reading for the individuals in the experimental group compared to the ones from the control group.
+
