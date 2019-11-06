@@ -4,12 +4,33 @@ author: "Michael Yan"
 date: "11/5/2019"
 output: github_document
 ---
+# General setup
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(viridis)
+library(readxl)
+library(patchwork)
+devtools::install_github("benmarwick/wordcountaddin", type = "source", dependencies = TRUE)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
 
 # Problem 1
 ```{r}
 ## load in the given dataset and clean the names
-library(tidyverse)
-
 set.seed(10)
 
 iris_with_missing = iris %>% 
@@ -19,27 +40,41 @@ iris_with_missing = iris %>%
 ```
 
 ```{r}
-
-
-iris_with_missing %>% 
-  mutate(sepal_length = replace_na(sepal_length, mean(pull(iris_with_missing, sepal_length), na.rm = TRUE)))
-
-iris_with_missing %>% 
-  mutate(species = replace_na(species, "virginica"))
-
-
-## fill in missing values
 fill_missing = function(x) {
   if (is.numeric(x)) {
-    mutate(x = replace_na(x, mean(pull(iris_with_missing, x), na.rm = TRUE)))
-  } 
-  else if (is.character(x)) {
-    mutate(x = replace_na(x, "virginica"))
+     x = replace_na(x, round(mean(x, na.rm = TRUE),1))
   }
+  else if (is.character(x)) {
+     x = replace_na(x, "virginica")
+  }
+  x
 }
-
-iris_with_missing %>% 
-  fill_missing(sepal_length)
+map(iris_with_missing, fill_missing) %>% 
+  bind_cols()
 ```
 
+# Problem 2
+```{r}
+## import data, create a read file function, combine files
+file_names = list.files("./data")
 
+read_file = function(x) {
+  path = str_c("./data/",x)
+  read_csv(path)
+}
+
+combined_df = 
+  purrr::map(file_names,read_file) %>%
+  bind_rows() %>% 
+  janitor::clean_names() %>%
+  mutate(file_names = file_names) %>% 
+  separate(file_names, into = c("arm", "id"), sep = "_") %>% 
+  mutate(arm = recode(arm, 
+                            "con" = "control", 
+                            "exp" = "experimental")) %>%
+  mutate(id = str_remove(id,".csv")) %>% 
+  select(id, arm, everything())
+
+combined_df %>%
+  knitr::kable()
+```
